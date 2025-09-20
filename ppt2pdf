@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+import subprocess
+import os
+import sys
+
+def convert_ppt_to_pdf(ppt_path):
+    """Converts a PowerPoint presentation to a PDF using osascript."""
+    if not os.path.exists(ppt_path):
+        print(f"❌ File not found: {ppt_path}")
+        return
+
+    # AppleScript to convert PPT/PPTX → PDF
+    script_template = f"""
+    set ppt_file_path to POSIX file "{ppt_path}"
+    set pdf_file_path to ((characters 1 thru -5 of (POSIX path of ppt_file_path)) as string) & ".pdf"
+    tell application "Microsoft PowerPoint"
+        activate
+        open ppt_file_path
+        set activePres to active presentation
+        save activePres in (POSIX file pdf_file_path) as save as PDF
+        close activePres saving no
+    end tell
+    return pdf_file_path
+    """
+
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script_template],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        pdf_path = result.stdout.strip()
+        print(f"✅ Converted: {ppt_path} → {pdf_path}")
+        return pdf_path
+    except subprocess.CalledProcessError as e:
+        print(f"❌ AppleScript Error with {ppt_path}: {e.stderr}")
+        return None
+
+
+def main():
+    if len(sys.argv) > 1:
+        target = sys.argv[1]
+    else:
+        target = os.getcwd()
+
+    # Case 1: Direct file
+    if os.path.isfile(target) and target.lower().endswith((".ppt", ".pptx")):
+        convert_ppt_to_pdf(os.path.abspath(target))
+        return
+
+    # Case 2: Folder
+    if os.path.isdir(target):
+        ppt_files = [f for f in os.listdir(target) if f.lower().endswith((".ppt", ".pptx"))]
+
+        if not ppt_files:
+            print("⚠️ No PowerPoint files found in folder.")
+            sys.exit(0)
+
+        for ppt_file in ppt_files:
+            ppt_path = os.path.join(target, ppt_file)
+            convert_ppt_to_pdf(ppt_path)
+        return
+
+    # Invalid path
+    print(f"❌ Not a valid file or folder: {target}")
+    sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
