@@ -35,7 +35,7 @@ cd ppt2pdf
 chmod +x ppt2pdf
 ```
 
-3. **(Optional) Move it to your PATH** to run it anywhere:
+3. **Move it to your PATH** to run it anywhere:
 
 ```bash
 sudo mv ppt2pdf /usr/local/bin/
